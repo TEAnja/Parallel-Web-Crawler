@@ -1,0 +1,73 @@
+Written Questions
+
+Q1. Run the web crawler using the configurations located at src/main/config/written_question_1a.json and
+    src/main/config/written_question_1b.json. The only difference between these configurations is that one always uses
+    the sequential crawler and the other always uses the parallel crawler. Inspect the profile output in
+    profileData.txt.
+
+    If you are using a multi-processor computer, you should notice that SequentialWebCrawler#crawl and
+    ParallelWebCrawler#crawl took about the same amount of time, but PageParserImpl#parse took much longer when run with
+    the ParallelWebCrawler.
+
+    Why did the parser take more time when run with ParallelWebCrawler?
+    I think it took more time with the ParallelWebCrawler, because it needed to make system calls to create/register
+    threads for each iteration, and these are quite slow. Parallel code would increase the efficiency when the
+    iterations would otherwise take longer to process. Since the time spent for each operation/iteration was small,
+    it was faster for the sequential version with no system calls, than for parallel with system calls.
+
+
+Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
+    the sequential crawler actually outperforms the parallel crawler. She would like to know why.
+
+    (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
+        (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
+        I think the reason for the slow processing might be due to the physical constraints of her computer, which
+        prevents frequency scaling. The speed of processing is dependant of computer architecture, meaning that multi-core
+        processors can run parallel operations and cut the time needed to carry them out. A single-core CPU, which
+        is more often found in older computers, is not able to run parallel operations.
+
+    (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
+        crawler. Why will it perform better?
+        First, to run parallel operations, the tasks need to be 'parallelizable' and the computer architecture must support
+        parallel processing with multi-core processors.
+        In this scenario, I think the parallel crawler would be faster with higher maxDepth number. I think the number
+        of iterations at every level would be faster achieved in parallel, than sequential. Here I imagine a sequential
+        crawler as depth-first search, which requires more memory, and parallel as iterative search, which is optimized
+        with recursion.
+
+Q3. Analyze your method profiler through the lens of Aspect Oriented Programming, by answering the following questions:
+
+    (a) What cross-cutting concern is being addressed by the com.udacity.webcrawler.profiler.Profiler class?
+    The cross-cutting concern is performance profiling. We do not want to record the running times
+    of all method invocations, since the crawler runs in parallel. We only want to record the methods
+    with the Profiled annotations.
+    (b) What are the join points of the Profiler in the web crawler program?
+    The join points of the Profiler and the web crawler can be found in ProfilingMethodInterceptor.java,
+    where method interceptors plug in. They intercept method calls annotated with the @Profiled annotation and let them
+    be recorded.
+
+
+Q4. Identify three (3) different design patterns used in this project, and explain which interfaces, classes, and/or
+    libraries use or implement those design patterns.
+
+    For each pattern, name one thing about the pattern that you LIKED, and one thing you DISLIKED. If you did not like
+    anything, you can name two things you disliked.
+
+    The three design patterns used in this project are builder, abstract factory and
+    dependency injection.
+    The builder pattern is used in CrawlerConfiguration, which we annotated with
+    @JsonDeserialize(builder...), and then defined the mapping between JSON property
+    names and builder methods by annotating the builder's setter methods with @JsonProperty.
+    I think the builder pattern may create more code (thus more complexity), but the
+    option to create some mandatory and some optional parameters levels out the disadvantage
+    of complexity.
+    The abstract factory is used in PageParserFactory.java and PageParserFactoryImpl.java.
+    The first one supplies instances of PageParser and the second one wraps the instances
+    with Profiler to get the url, which saves us from specifying the url parameter over again.
+    We can add new variants of instances without breaking existing code, but it may become
+    more complicated than necessary, because we need new interfaces and classes.
+    We used dependency injection in WebCrawlerMain.java to inject WebCrawler and Profiler,
+    which enables us to skip the manual creation of object, since the dependency injection
+    does that for us. What I dislike about DI is that it is quite hard to trace the code,
+    because it separates behaviour and construction (so we need to jump back and forth).
+
